@@ -20,7 +20,7 @@ var http = require('http');
 var SELF = 'DclHome001.Home';
 var PORT = 47790;
 var state = {
-  watched: null, seen: false, leaving: false,
+  watched: null, seen: false, leaving: false, uiReady: false, visibilityReliable: false,
   apps: [], running: {}, selfVisible: null, hiddenSince: 0, watchAt: 0, lastLaunch: 0, last: null
 };
 
@@ -75,6 +75,7 @@ function tick() {
     if (!me) { return; }
     var now = Date.now();
     if (me.visible) {
+      state.visibilityReliable = true;
       state.selfVisible = true; state.hiddenSince = 0; state.watched = null;
       if (now - (state.snapAt || 0) > 5000) { state.snapAt = now; snapshot(function (r) { state.running = r; }); }
       return;
@@ -108,7 +109,9 @@ function tick() {
         }
       }
       state.running = r;
-      launchSelf('covered without an app');
+      // Older TU8000 firmware reports visible=false even for the foreground launcher.
+      // Never infer Home from that alone: it caused a relaunch loop every two seconds.
+      if (state.visibilityReliable) { launchSelf('covered without an app'); }
     });
   });
 }
@@ -123,14 +126,14 @@ module.exports.onStart = function () {
     } else if (url.pathname === '/leave') {
       state.leaving = true; state.watched = null;
     } else if (url.pathname === '/home') {
-      state.leaving = false; state.watched = null;
+      state.leaving = false; state.watched = null; state.uiReady = true;
     }
     res.writeHead(200, { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' });
     res.end(JSON.stringify(state));
   }).listen(PORT, '127.0.0.1');
   setInterval(tick, 300);
   // Started at boot (on-boot="true"): open the launcher so the TV comes up on it.
-  setTimeout(function () { launchSelf('boot'); }, 3000);
+  setTimeout(function () { if (!state.uiReady) { launchSelf('boot'); } }, 5000);
 };
 
 module.exports.onRequest = function () {};

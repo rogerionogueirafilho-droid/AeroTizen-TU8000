@@ -37,7 +37,10 @@
   });
 
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) { A.clock.tick(); A.inputs.load(); }
+    if (!document.hidden) {
+      A.clock.tick(); A.inputs.load();
+      A.apps.load(function () { if (!A.settingsUi.isOpen()) { A.homeScreen.render(); } });
+    }
   });
 
   // ---- boot ----------------------------------------------------------------------
@@ -51,6 +54,7 @@
     A.homeScreen.render();
     A.inputs.load();
     A.homewatch.start();
+    A.homewatch.ready();
     setTimeout(function () { A.homewatch.reportApps(A.apps.realIds); }, 1500);
   });
 })(window.AeroTizen);

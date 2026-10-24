@@ -13,16 +13,19 @@
   function render() {
     var grid = A.$('grid'), home = A.settings.home;
     grid.textContent = '';
-    home = home.filter(function (id) { return id === cfg.FIREPLACE_ID || A.apps.byId(id); });
-    if (home.indexOf(cfg.FIREPLACE_ID) < 0) { home.unshift(cfg.FIREPLACE_ID); }
+    home = home.map(function (id) { return id === cfg.FIREPLACE_ID ? cfg.STORE_ID : id; });
+    home = home.filter(function (id, i) { return (id === cfg.STORE_ID || A.apps.byId(id)) && home.indexOf(id) === i; });
+    if (home.indexOf(cfg.STORE_ID) < 0) { home.unshift(cfg.STORE_ID); }
     A.settings.home = home;
     home.forEach(function (id) {
       var tile;
-      if (id === cfg.FIREPLACE_ID) {
-        tile = A.el('div', 'tile fire');
-        tile.innerHTML = A.tiles.ICONS.flame;
-        tile.appendChild(A.el('div', 'name', 'Fireplace'));
-        tile.onclick = A.apps.playFireplace;
+      if (id === cfg.STORE_ID) {
+        tile = A.el('div', 'tile samsung-store');
+        tile.innerHTML = A.tiles.ICONS.store;
+        var label = A.el('div', 'name', 'Apps');
+        label.appendChild(A.el('div', 'sub', 'Loja Samsung'));
+        tile.appendChild(label);
+        tile.onclick = A.apps.openStore;
       } else {
         var app = A.apps.byId(id);
         tile = A.tiles.banner(app, '', function () { A.apps.launch(app); });

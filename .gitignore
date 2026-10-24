@@ -8,5 +8,12 @@ dist/
 *.p12
 password.txt
 device-profile.xml
+*.key
+*.pem
+.env
+.env.*
+preview-*.png
+.pytest_cache/
+.ruff_cache/
 node_modules/
 package-lock.json

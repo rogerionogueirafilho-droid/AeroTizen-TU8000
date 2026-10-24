@@ -6,7 +6,12 @@
   var apps = A.apps = { all: [], realIds: [] };
 
   function isRealApp(a) {
-    return a.show !== false && (cfg.STORE_PACKAGE.test(a.packageId || '') || Object.prototype.hasOwnProperty.call(cfg.PRELOADED_APPS, a.id));
+    // TU8000 marks many firmware daemons as show=true. Include user packages of
+    // any length, but not Samsung/Tizen infrastructure or app background workers.
+    var userPackage = /^[A-Za-z0-9]{8,}$/.test(a.packageId || '');
+    return a.name && a.show !== false && !cfg.HIDDEN_APPS.test(a.id) && !cfg.HIDDEN_APPS.test(a.name)
+      && !/service|worker|launcher|tvdevicecare/i.test(a.name)
+      && (userPackage || Object.prototype.hasOwnProperty.call(cfg.PRELOADED_APPS, a.id));
   }
 
   apps.load = function (done) {
@@ -15,14 +20,29 @@
         .map(function (name, i) { return { id: 'demo' + i, name: name, icon: '' }; });
       return done();
     }
-    tz.application.getAppsInfo(function (list) {
-      apps.realIds = list.filter(function (a) { return isRealApp(a) && !/service|DclHome001/i.test(a.id); })
-        .map(function (a) { return cfg.PRELOADED_APPS[a.id] || a.id; });
-      apps.all = list.filter(function (a) { return isRealApp(a) && a.name && !cfg.HIDDEN_APPS.test(a.id) && !cfg.HIDDEN_APPS.test(a.name); })
-        .map(function (a) { return { id: a.id, name: a.name, icon: a.iconPath || '' }; })
+    // Paint immediately. Native discovery must never hold the home screen hostage.
+    apps.all = apps.all.length ? apps.all : (window.INSTALLED_APPS || []).slice();
+    apps.realIds = apps.all.map(function (a) { return a.storeId || cfg.PRELOADED_APPS[a.id] || a.id; });
+    done();
+    try { tz.application.getAppsInfo(function (list) {
+      var known = window.INSTALLED_APPS || [], byId = {};
+      list.forEach(function (a) {
+        var installed = known.some(function (k) { return k.id === a.id; });
+        if (isRealApp(a) || installed) {
+          byId[a.id] = { id: a.id, name: a.name, icon: a.iconPath || '' };
+        }
+      });
+      // Some TU8000 preinstalled apps are not exposed by getAppsInfo at all.
+      known.forEach(function (a) {
+        if (!byId[a.id] && !list.length) { byId[a.id] = { id: a.id, name: a.name, icon: a.icon || '' }; }
+        if (byId[a.id]) { byId[a.id].storeId = a.storeId; }
+      });
+      apps.all = Object.keys(byId).map(function (id) { return byId[id]; })
         .sort(function (a, b) { return a.name.localeCompare(b.name); });
-      done();
-    }, function () { apps.all = []; done(); });
+      apps.realIds = apps.all.map(function (a) { return a.storeId || cfg.PRELOADED_APPS[a.id] || a.id; });
+      if (A.settingsUi && A.settingsUi.isOpen()) { A.settingsUi.refreshApps(); }
+      else if (A.homeScreen) { A.homeScreen.render(); }
+    }, function () {}); } catch (e) { /* Keep the local installed-app inventory. */ }
   };
 
   apps.byId = function (id) {
@@ -37,7 +57,7 @@
         if (picked.indexOf(a.id) < 0 && a.name.toLowerCase().indexOf(want) === 0) { picked.push(a.id); }
       });
     });
-    return [cfg.FIREPLACE_ID].concat(picked);
+    return [cfg.STORE_ID].concat(picked);
   };
 
   apps.launch = function (app) {
@@ -54,7 +74,12 @@
       var id = ids.shift();
       if (!id) { return A.toast('Could not open the app store'); }
       A.homewatch.watch(id);
-      tz.application.launch(id, null, next);
+      tz.application.launch(id, null, function () {
+        try {
+          var control = new tz.ApplicationControl('http://tizen.org/appcontrol/operation/view');
+          tz.application.launchAppControl(control, id, null, next);
+        } catch (e) { next(); }
+      });
     })();
   };
 

@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/helalaou/AeroTizen/launcher" version="2.0.0" viewmodes="maximized">
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="https://github.com/helalaou/AeroTizen/launcher" version="2.0.7" viewmodes="maximized">
   <name>AeroTizen</name>
   <icon src="icon.png"/>
   <content src="index.html"/>
   <feature name="http://tizen.org/feature/screen.size.normal.1080.1920"/>
+  <feature name="http://tizen.org/feature/web.service"/>
   <tizen:application id="DclHome001.Home" package="DclHome001" required_version="2.3"/>
-  <tizen:service id="DclHome001.Watcher" on-boot="true" auto-restart="true">
-    <tizen:content src="service/index.js"/>
-    <tizen:name>HomeWatcher</tizen:name>
-    <tizen:description>Returns to the launcher when Home is pressed inside an app</tizen:description>
+  <tizen:service id="DclHome001.Watcher" on-boot="true" auto-restart="false">
+    <tizen:content src="service/bootstrap.js"/>
+    <tizen:name>AeroTizen Startup</tizen:name>
+    <tizen:description>Opens the home screen at startup without visibility polling</tizen:description>
   </tizen:service>
   <tizen:profile name="tv-samsung"/>
   <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="enable" encryption="disable" install-location="auto" hwkey-event="enable"/>

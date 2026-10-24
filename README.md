@@ -1,128 +1,221 @@
-# AeroTizen
+# AeroTizen TU8000
 
-A simple home screen for Samsung TVs, and a command-line tool to clean the TV up from your computer.
+**Tela inicial limpa para Samsung Tizen, com inicialização automática ao ligar a TV.**
 
-![AeroTizen home screen](docs/screenshots/home.png)
+Adaptação de [AeroTizen, de Hamza El Alaoui](https://github.com/helalaou/AeroTizen),
+desenvolvida e testada por LuizFLB na **Samsung UN50TU8000GXZD (2020), Tizen 5.5**.
+Versão do launcher: **2.0.7**.
 
-## Motivation
+![Tela inicial do AeroTizen TU8000](docs/screenshots/tu8000-home.png)
 
-The default home screen on recent Samsung TVs is mostly ads. The "Top Picks for You" row can't be
-removed, Samsung TV Plus starts playing on its own at boot, and the TV tracks what you watch unless
-you find the privacy settings to turn it off.
+## Inicializa junto com a TV
 
-On Android TV you would install a different launcher and remove the junk over ADB. Tizen allows
-neither: there's no way to replace the home screen, no shell, and the official developer tools are
-a large SDK that doesn't run natively on Apple Silicon.
+O pacote inclui um serviço Tizen com `on-boot`, que abre o AeroTizen automaticamente.
+A abertura sem comando do computador foi observada na TU8000 e confirmada na tela
+pelo proprietário. Depois de instalado, o computador não precisa ficar ligado.
 
-AeroTizen works around that. The launcher is a normal TV app that acts as the home screen: it opens
-when the TV turns on and comes back when you press Home. The CLI handles the setup (certificates,
-signing, installing) and shows which preinstalled apps can be removed. Tizen Studio and root
-access aren't needed.
+**O atraso interno atual é de 1 segundo após o serviço iniciar.** A TV pode mostrar
+a tela Samsung antes disso: o tempo que o firmware leva para iniciar o serviço
+se soma a esse segundo. Na detecção de retorno de standby, o serviço usa uma espera
+de 5 segundos. Não significa que a tela estará pronta 1 segundo após apertar Power.
+Não foram validados todos os cenários de reinício, corte de energia ou firmware.
 
-## Features
+A inicialização usa certificado de distribuidor **Partner**, emitido pela Samsung
+para a TV de destino. Um certificado Public sozinho não resolveu o autorun nesta
+TU8000. A emissão Partner depende da aprovação/disponibilidade da Samsung para
+cada conta e dispositivo; este repositório não fornece certificados privados.
 
-On the TV:
+## O que mudou nesta edição
 
-- Your apps in a 3-column grid with their real logos, inputs underneath
-- Opens at power-on and comes back on Home (see [Limits](#limits))
-- Hold OK on a tile to move it around
-- Inputs list every HDMI port and the name of what's plugged in. You can rename them
-- 31 backgrounds, 16 of them animated, with a speed slider and preview (for example [Snowfall](docs/screenshots/theme-snowfall.png) and [Lava](docs/screenshots/theme-lava.png))
-- Time, date, weather and your city in the top bar, in the format you pick
-- Shows whether the TV is on Ethernet or Wi-Fi
-- A Fireplace tile that plays a fireplace video
-- Settings to choose which apps show up, open the Samsung app store, or go back to Samsung's home screen
+- Loja Samsung Apps no lugar do cartão Fireplace.
+- Lista de aplicativos com descoberta nativa, incluindo apps que antes não apareciam.
+- Inventário inicial offline para evitar uma tela presa no carregamento.
+- Logos locais de Disney+, HBO Max e Nuvio, vetores e símbolos para os demais apps.
+- Alternativa de ícone com iniciais quando a imagem de um app não carrega.
+- Layout compatível com o Chromium 69 da TU8000.
+- Serviço de inicialização que observa energia e retomada, sem reabrir o launcher continuamente.
+- Favoritos, organização de cartões, fundos, relógio, clima e entradas herdados do AeroTizen.
 
-From your computer (`aerotizen`):
+## TVs compatíveis e possíveis candidatas
 
-- Finds the TV on your network
-- Connects to the TV's developer port directly in Python, on macOS, Linux or Windows
-- Creates the Samsung signing certificates for your TV (you sign in to your Samsung account once)
-- Signs and installs any `.wgt` app, including the launcher
-- Lists installed apps, flags the bloat, and removes it if your firmware allows
-
-There's also a short [guide to the settings worth turning off](docs/settings.md) (ads, viewing
-data, autorun) and [DNS blocklists](dns/) if you run Pi-hole, AdGuard Home or NextDNS.
-
-| Settings | Moving a tile |
+| TV / família | Situação desta edição |
 |---|---|
-| ![Settings](docs/screenshots/settings.png) | ![Moving a tile](docs/screenshots/move.png) |
+| **Samsung UN50TU8000GXZD, 2020, Tizen 5.5** | **Testada:** instalação, interface, apps e abertura automática com atraso observado. |
+| Outras TU8000, tamanhos ou regiões | Candidatas próximas; ainda sem teste específico. |
+| TU7000 / TU8500 e QLED 2020 (ex.: Q60T / Q70T / Q80T) | Possíveis candidatas por geração Tizen 5.5; não testadas. |
+| AU7000 / AU8000 (2021), BU8000 (2022), CU8000 (2023), DU7000 / DU8000 (2024) | Possíveis candidatas Tizen mais recentes; instalação, APIs e autorun precisam de validação individual. |
+| Samsung DU7200 | O projeto original relata teste em UN65DU7200FXZA/Tizen 9.0; isso não valida esta adaptação nesse modelo. |
+| Samsung anteriores a 2020 | Fora do escopo testado desta edição. |
+| LG webOS, Android TV, Google TV e Samsung sem Tizen | Esta versão não é destinada a esses sistemas. |
 
-The device names and weather in these screenshots are placeholders.
+As candidatas são uma **inferência de plataforma**, não uma lista de compatibilidade
+confirmada. Ano, região e atualização de firmware podem mudar o comportamento.
+Referência: [grupos de modelos da Samsung](https://developer.samsung.com/smarttv/develop/specifications/tv-model-groups.html).
+Relate modelo completo, região, Tizen e resultado de ligar/desligar em uma
+[issue de compatibilidade](https://github.com/luizflb/AeroTizen-TU8000/issues/new?template=model_report.yml).
 
-## Tested on
+## Instalação passo a passo (Windows)
 
-| TV | Year | Firmware |
-|---|---|---|
-| Samsung 65" Crystal UHD DU7200 (UN65DU7200FXZA) | 2024 | Tizen 9.0 |
+### 1. Prepare o computador
 
-Other Samsung TVs from 2020 on should work, but this is the only model tested so far. If you try it
-on yours, please [open a model report](../../issues/new?template=model_report.yml).
+Instale [Python 3.10 ou mais recente](https://www.python.org/downloads/windows/)
+com a opção **Add python.exe to PATH**, e [Git](https://git-scm.com/downloads/win).
+Abra um novo PowerShell e confira:
 
-## Setup
+```powershell
+python --version
+git --version
+```
 
-You need a computer on the same network as the TV, with Python 3.10 or newer.
+Se `python` não for encontrado, corrija a instalação/PATH antes de continuar.
+Se apenas `py` funcionar, use `py` no lugar de `python` nos comandos abaixo.
+Computador e TV devem estar na mesma rede.
 
-1. Install the CLI and check that it finds your TV:
+### 2. Baixe esta edição e instale a ferramenta
 
-   ```bash
-   pip install git+https://github.com/helalaou/AeroTizen
-   aerotizen discover
-   ```
+```powershell
+git clone https://github.com/luizflb/AeroTizen-TU8000.git
+cd AeroTizen-TU8000
+python -m pip install -e ".[dev]"
+aerotizen discover
+```
 
-2. Turn on Developer Mode on the TV. Open **Apps**, type `12345` on the remote (or with the
-   on-screen number pad), switch Developer mode on, and set Host PC IP to your computer's IP.
-   Then unplug the TV for a minute. Turning it off with the remote isn't enough for the change to
-   apply. `aerotizen status` should now show `developerMode=1`.
+Use o IP da sua TV no lugar de `192.168.1.50` nos exemplos. O IP é apenas um exemplo.
+Se `aerotizen` não for reconhecido, reabra o terminal e confira o diretório Scripts
+na instalação do Python.
 
-3. Create the certificates. This opens Samsung's sign-in page in your browser:
+### 3. Ative o Modo Desenvolvedor
 
-   ```bash
-   aerotizen certs
-   ```
+Na TV, abra **Apps** e digite **12345** com o controle ou teclado numérico virtual.
+Ative **Developer Mode** e informe em **Host PC IP** o IP do computador, obtido
+com `ipconfig` no PowerShell. Esse campo recebe o IP do PC, não o da TV.
 
-4. Install the launcher:
+Reinicie conforme a orientação da TV. No procedimento usado neste projeto, foi
+necessário retirar da tomada por cerca de um minuto e ligar novamente.
+Confira a conexão:
 
-   ```bash
-   git clone https://github.com/helalaou/AeroTizen && cd AeroTizen
-   aerotizen install launcher
-   ```
+```powershell
+aerotizen --tv 192.168.1.50 status
+```
 
-That's it. The TV will start on AeroTizen from now on, and the gear icon opens settings.
+O resultado deve indicar `developerMode=1` e acesso SDB. O fluxo usa SDB/Tizen,
+não ADB/Android. Não precisa de root.
 
-To look at or remove installed apps, run `aerotizen apps` and `aerotizen debloat`.
+### 4. Crie os certificados da sua TV
 
-## Limits
+```powershell
+aerotizen --tv 192.168.1.50 certs
+```
 
-Samsung doesn't support any of this officially, so some parts are workarounds:
+Conclua o login na página oficial da Samsung aberta no navegador. Os certificados
+são gerados localmente, vinculados ao identificador da sua TV. Guarde o certificado
+de autor para poder atualizar a mesma instalação no futuro.
 
-- Pressing Home brings AeroTizen back after a second or two. That works from Samsung's home
-  screen and inside Netflix, but not inside YouTube, Prime Video, Stremio or Spotify. Those apps
-  don't report whether they're on screen, so there's no way to tell. Back still works everywhere.
-- On Tizen 6 and newer, store and preinstalled apps can't be removed over the developer
-  connection. You can delete them on the TV under Apps → Settings. Samsung's system apps (TV Plus,
-  Gaming Hub) can only be disabled.
-- TV apps are drawn at 1920×1080 and upscaled, even on a 4K panel. Only video plays at full 4K.
-- Samsung's own menus and screens can't be changed. The [settings guide](docs/settings.md) and
-  [DNS lists](dns/) cover what you can switch off.
+### 5. Habilite o certificado usado na inicialização automática
 
-## Contributing
+Primeiro obtenha a cadeia pública pela extensão oficial Samsung:
 
-The goal is a home screen that works well on every Samsung TV and gets as far as possible from the
-ads and clutter Tizen ships with. Help is welcome, especially testing on other models: a model
-report saying what works and what doesn't is the most useful contribution. Pull requests for
-fixes, new themes or features are welcome too. See [CONTRIBUTING.md](CONTRIBUTING.md).
+```powershell
+python tools/fetch_partner_ca.py
+python tools/enable_boot_certificate.py --tv 192.168.1.50
+```
 
-## Credits
+Conclua o novo login Samsung quando solicitado. O script pede um distribuidor
+Partner, valida sua assinatura e preserva o autor. Os certificados anteriores
+ficam em `public-backup`, no diretório privado de certificados.
 
-- [LTvLauncher](https://github.com/leanbitlab-org/LtvLauncher), which the layout is based on
-- [Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung) and [tizen-sdb](https://github.com/PatrickSt1991/tizen-sdb), for how the developer connection, certificates and signing work
-- [samsung-tizen-tv-debloat](https://github.com/ardazeytin/samsung-tizen-tv-debloat), for which packages are safe to remove
-- App logos from [Simple Icons](https://simpleicons.org) (trademarks belong to their owners)
-- Weather from [Open-Meteo](https://open-meteo.com), location from [ipapi](https://ipapi.co)
+**Continue somente se a emissão e a verificação terminarem com sucesso.** Se a
+Samsung recusar a emissão, não há garantia de inicialização automática com este
+procedimento. Não use certificados de outras pessoas e não envie `.p12`, senhas,
+`device-profile.xml`, tokens ou pacotes assinados para issues.
 
-This project isn't affiliated with Samsung. Use it at your own risk.
+### 6. Capture a lista de apps e instale
 
-## License
+```powershell
+python tools/tv_inventory.py --tv 192.168.1.50
+aerotizen --tv 192.168.1.50 install launcher
+```
 
-[MIT](LICENSE)
+A captura atualiza o inventário offline antes da assinatura. O pacote fornecido
+no código usa um inventário de referência da TU8000; a descoberta nativa o
+atualiza durante o uso. Cada pessoa assina o pacote para sua própria TV.
+
+Abra **AeroTizen** pela lista de aplicativos da Samsung.
+
+### 7. Ajuste a abertura ao ligar
+
+Na TU8000: **Configurações → Geral → Funções Smart**:
+
+- Ligue **Execução automática do último aplicativo**.
+- Desligue **Execução automática do Smart Hub**.
+- Desligue **Execução automática do Samsung TV Plus**, se essa opção existir.
+
+Deixe o AeroTizen aberto, desligue normalmente pelo controle e ligue novamente.
+Aguarde a inicialização do sistema e observe se a tela aparece automaticamente.
+Repita o teste após usar outros apps. Em gerações mais novas, os nomes/caminhos
+dessas opções podem ser diferentes.
+
+## Uso e atualização
+
+A engrenagem abre as configurações. Selecione os apps que deseja na tela inicial;
+segure OK em um cartão para reorganizar. O cartão **Apps** abre a loja Samsung.
+Os streamings continuam usando seus aplicativos e assinaturas habituais.
+
+Para atualizar, preserve os certificados e execute na pasta do projeto:
+
+```powershell
+git pull
+aerotizen --tv 192.168.1.50 install launcher
+```
+
+Para voltar à interface Samsung, pressione Home ou use a opção de voltar à tela
+Samsung nas configurações do AeroTizen. Para remover definitivamente o serviço,
+remova o pacote AeroTizen nas configurações de Apps; se permitido pelo firmware,
+a remoção por SDB também é possível. Apenas sair do app não desativa o `on-boot`.
+
+## Limites conhecidos
+
+- É um aplicativo com serviço de inicialização; o Tizen e o destino do botão Home
+  continuam sendo controlados pela Samsung.
+- A abertura automática foi observada com atraso. Não há garantia de autorun em
+  todos os firmwares ou em toda forma de desligamento.
+- A espera inicial de 1 segundo não elimina o tempo de boot do sistema.
+- Esta edição desativa o vigilante original que tentava recuperar a tela a partir
+  de sinais de visibilidade: na TU8000 esses sinais causavam reaberturas em loop.
+- Não remove anúncios dentro de Netflix, YouTube ou outros serviços.
+- Nenhum app de sistema precisa ser removido para instalar este launcher.
+- Não inclui filmes, canais IPTV, contas, assinaturas ou listas M3U.
+- Logos de alguns apps são símbolos locais; um app desconhecido pode usar iniciais.
+
+## Testes e detalhes técnicos
+
+```powershell
+npm install
+npm run lint
+node tools/verify-startup.cjs
+python -m pytest
+```
+
+Para verificar a interface com Playwright, instale `playwright` separadamente
+(`npm install --no-save playwright`), execute `npx playwright install chromium`
+e rode `node tools/verify-launcher.cjs`. É possível indicar um Chrome instalado
+com a variável `CHROME_EXECUTABLE`.
+
+A validação de interface cobre os 16 apps de referência, logos locais, falhas de
+ícone, loja e descoberta que demora a responder. O teste do serviço simula boot,
+standby, retomada e cancelamento; não substitui testes físicos em outros modelos.
+Veja [notas técnicas da TU8000](docs/TU8000.md).
+
+## Créditos e licença
+
+Adaptação TU8000 e testes: **LuizFLB**, com assistência de IA no desenvolvimento.
+Base: **[AeroTizen — Hamza El Alaoui](https://github.com/helalaou/AeroTizen)**.
+O histórico e a licença MIT originais foram preservados.
+
+Demais créditos: [LTvLauncher](https://github.com/leanbitlab-org/LtvLauncher),
+[Apps2Samsung](https://github.com/Apps2Samsung/Apps2Samsung),
+[tizen-sdb](https://github.com/PatrickSt1991/tizen-sdb),
+[Simple Icons](https://simpleicons.org), Open-Meteo e ipapi.
+As fontes dos logos adicionais estão em [SOURCES.md](launcher/assets/apps/SOURCES.md).
+Marcas pertencem aos respectivos titulares. Não há afiliação com Samsung ou os
+serviços de streaming. [Licença MIT](LICENSE).

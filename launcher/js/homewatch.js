@@ -8,7 +8,7 @@
   var leaving = false;
 
   function tell(path) {
-    if (!tz) { return; }
+    if (!tz || !cfg.WATCHER_ENABLED) { return; }
     var x = new XMLHttpRequest();
     x.open('GET', cfg.SERVICE_URL + path);
     x.timeout = 1500;
@@ -17,7 +17,15 @@
   }
 
   function start() {
-    if (!tz) { return; }
+    if (!tz || !cfg.WATCHER_ENABLED) { return; }
+    if (window.AeroService) {
+      window.AeroService.startService(cfg.SERVICE_ID).then(function () {
+        A.homewatch.available = true;
+        if (!document.hidden) { tell('/home'); }
+        tell('/apps?ids=' + A.apps.realIds.map(encodeURIComponent).join(','));
+      }, function () { A.homewatch.available = false; });
+      return;
+    }
     try {
       tz.application.launchAppControl(new tz.ApplicationControl('http://tizen.org/appcontrol/operation/service'),
         cfg.SERVICE_ID, null, null);
@@ -30,6 +38,7 @@
     watch: function (appId) { tell('/watch?id=' + encodeURIComponent(cfg.PRELOADED_APPS[appId] || appId)); },
     // Every real app, so the service can tell a cast/launch from elsewhere apart from Home.
     reportApps: function (ids) { tell('/apps?ids=' + ids.map(encodeURIComponent).join(',')); },
+    ready: function () { if (!document.hidden) { tell('/home'); } },
     // The tucked-away escape: hand the TV back to Samsung Home until the launcher is reopened.
     useSamsungHome: function () {
       leaving = true;

@@ -101,7 +101,7 @@
     box.textContent = '';
     var add = A.el('div', 'tile addapps');
     add.dataset.key = 'add';
-    add.innerHTML = A.tiles.ICONS.plus + '<div class="name">Add apps<div class="sub">Samsung app store</div></div>';
+    add.innerHTML = A.tiles.ICONS.store + '<div class="name">Loja de apps<div class="sub">Samsung Apps</div></div>';
     add.onclick = A.apps.openStore;
     box.appendChild(add);
     A.apps.all.forEach(function (app) {
@@ -179,6 +179,7 @@
     document.body.classList.add('editing');
     A.$('editor').hidden = false;
     render();
+    A.apps.load(function () { if (open) { renderAppMenu(); focus(); } });
   }
 
   function close() {
@@ -189,5 +190,6 @@
     A.homeScreen.render();
   }
 
-  A.settingsUi = { open: openSheet, close: close, isOpen: function () { return open; }, focus: focus, keydown: keydown };
+  A.settingsUi = { open: openSheet, close: close, isOpen: function () { return open; }, focus: focus, keydown: keydown,
+    refreshApps: function () { if (open) { renderAppMenu(); focus(); } } };
 })(window.AeroTizen);

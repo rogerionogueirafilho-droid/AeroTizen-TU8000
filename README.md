@@ -6,6 +6,9 @@ Adaptação de [AeroTizen, de Hamza El Alaoui](https://github.com/helalaou/AeroT
 desenvolvida e testada por LuizFLB na **Samsung UN50TU8000GXZD (2020), Tizen 5.5**.
 Versão do launcher: **2.0.7**.
 
+A branch padrão desta edição é `tu8000`, baseada na versão adaptada e testada
+na TV. A branch `main` herdada do projeto original contém outra linha de evolução.
+
 ![Tela inicial do AeroTizen TU8000](docs/screenshots/tu8000-home.png)
 
 ## Inicializa junto com a TV

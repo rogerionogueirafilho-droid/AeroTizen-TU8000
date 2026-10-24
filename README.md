@@ -3,7 +3,8 @@
 **Tela inicial limpa para Samsung Tizen, com inicialização automática ao ligar a TV.**
 
 Adaptação de [AeroTizen, de Hamza El Alaoui](https://github.com/helalaou/AeroTizen),
-desenvolvida e testada por LuizFLB na **Samsung UN50TU8000GXZD (2020), Tizen 5.5**.
+**feita para a Samsung TU8000, testada e funcional na TV de LuizFLB**.
+Modelo testado: **Samsung TU8000 — UN50TU8000GXZD (2020), Tizen 5.5**.
 Versão do launcher: **2.0.7**.
 
 A branch padrão desta edição é `tu8000`, baseada na versão adaptada e testada
@@ -14,8 +15,9 @@ na TV. A branch `main` herdada do projeto original contém outra linha de evolu�
 ## Inicializa junto com a TV
 
 O pacote inclui um serviço Tizen com `on-boot`, que abre o AeroTizen automaticamente.
-A abertura sem comando do computador foi observada na TU8000 e confirmada na tela
-pelo proprietário. Depois de instalado, o computador não precisa ficar ligado.
+**Testado e funcional na TU8000:** o AeroTizen abre sozinho ao ligar a TV,
+sem comando do computador, conforme confirmado pelo proprietário no uso real.
+Depois de instalado, o computador não precisa ficar ligado.
 
 **O atraso interno atual é de 1 segundo após o serviço iniciar.** A TV pode mostrar
 a tela Samsung antes disso: o tempo que o firmware leva para iniciar o serviço
@@ -39,21 +41,51 @@ cada conta e dispositivo; este repositório não fornece certificados privados.
 - Serviço de inicialização que observa energia e retomada, sem reabrir o launcher continuamente.
 - Favoritos, organização de cartões, fundos, relógio, clima e entradas herdados do AeroTizen.
 
-## TVs compatíveis e possíveis candidatas
+## Compatibilidade: TU8000 testada e funcional
 
-| TV / família | Situação desta edição |
+**Esta edição foi feita especificamente para a Samsung TU8000 e está testada e
+funcional nesse modelo.** Não é apenas uma candidata baseada na versão do Tizen.
+
+| TV testada nesta edição | Ano | Sistema | Resultado |
+|---|---|---|---|
+| **Samsung TU8000 — UN50TU8000GXZD** | **2020** | **Tizen 5.5 / Chromium 69** | **Testada e funcional:** instalação, tela inicial, lista de apps, loja Samsung, logos e inicialização automática ao ligar. |
+
+O detalhe da validação e do comportamento de inicialização está nas
+[notas técnicas da TU8000](docs/TU8000.md). Outros tamanhos e variantes regionais
+da TU8000 ainda não têm teste específico registrado nesta edição.
+
+### Outros modelos já testados no AeroTizen original
+
+Este projeto deriva do [AeroTizen original](https://github.com/helalaou/AeroTizen).
+Além da TU8000 testada aqui, a comunidade do projeto de origem já registra os
+seguintes modelos na [seção Tested on](https://github.com/helalaou/AeroTizen#tested-on):
+
+| Modelo testado no projeto original | Ano | Tizen informado |
+|---|---|---|
+| Samsung 65" Crystal UHD DU7200 — UN65DU7200FXZA | 2024 | 9.0 |
+| Samsung 65" The Frame LS03D — QE65LS03DAUXXU | 2024 | 9.0 |
+| Samsung 65" OLED S90C — QE65S90CATXZT | 2023 | 7.0 |
+| Samsung 75" QLED Q60B — QE75Q60BAUXXC | 2022 | 6.5 |
+
+Fonte consultada em 24/10/2026. Esses são testes relatados do **AeroTizen original**;
+a adaptação **TU8000 deste repositório** foi testada na TU8000. A relação mostra
+os testes de ambos os projetos sem atribuir aos outros modelos um teste desta edição.
+As funções e limitações podem diferir entre as versões; por exemplo, o original
+ainda não confirma partida a frio na The Frame citada.
+
+### Possíveis candidatas ainda sem teste registrado nesta edição
+
+| Família | Situação |
 |---|---|
-| **Samsung UN50TU8000GXZD, 2020, Tizen 5.5** | **Testada:** instalação, interface, apps e abertura automática com atraso observado. |
-| Outras TU8000, tamanhos ou regiões | Candidatas próximas; ainda sem teste específico. |
-| TU7000 / TU8500 e QLED 2020 (ex.: Q60T / Q70T / Q80T) | Possíveis candidatas por geração Tizen 5.5; não testadas. |
-| AU7000 / AU8000 (2021), BU8000 (2022), CU8000 (2023), DU7000 / DU8000 (2024) | Possíveis candidatas Tizen mais recentes; instalação, APIs e autorun precisam de validação individual. |
-| Samsung DU7200 | O projeto original relata teste em UN65DU7200FXZA/Tizen 9.0; isso não valida esta adaptação nesse modelo. |
+| Outras TU8000, tamanhos ou regiões | Mesma família do modelo testado; precisa confirmar a variante. |
+| TU7000 / TU8500 e QLED 2020, como Q60T / Q70T / Q80T | Possíveis candidatas por geração Tizen 5.5. |
+| AU7000 / AU8000, BU8000, CU8000, DU7000 / DU8000 | Possíveis candidatas Tizen mais recentes; validar APIs e inicialização por modelo. |
 | Samsung anteriores a 2020 | Fora do escopo testado desta edição. |
 | LG webOS, Android TV, Google TV e Samsung sem Tizen | Esta versão não é destinada a esses sistemas. |
 
-As candidatas são uma **inferência de plataforma**, não uma lista de compatibilidade
-confirmada. Ano, região e atualização de firmware podem mudar o comportamento.
-Referência: [grupos de modelos da Samsung](https://developer.samsung.com/smarttv/develop/specifications/tv-model-groups.html).
+Apenas esta última lista de candidatas é uma **inferência de plataforma**.
+Ano, região e firmware podem mudar o comportamento. Referência:
+[grupos de modelos da Samsung](https://developer.samsung.com/smarttv/develop/specifications/tv-model-groups.html).
 Relate modelo completo, região, Tizen e resultado de ligar/desligar em uma
 [issue de compatibilidade](https://github.com/luizflb/AeroTizen-TU8000/issues/new?template=model_report.yml).
 

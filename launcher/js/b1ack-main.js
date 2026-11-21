@@ -53,7 +53,11 @@
     document.title = prefs.name;
   }
   function safeImagePath(path) {
-    return /^(?:assets\/)[a-zA-Z0-9_/ .-]+\.(?:png|jpe?g|webp)$/i.test(path) && path.indexOf('..') === -1;
+    function safeImagePath(path) {
+  return /^(?:assets\/)[a-zA-Z0-9_/ .-]+\.(?:png|jpe?g|webp)$/i.test(path) && path.indexOf('..') === -1;
+}
+
+function background(path, persist) {
   function background(path, persist) {
     var request = ++imageRequest;
     $('wallpaper').style.backgroundImage = themes[prefs.theme];

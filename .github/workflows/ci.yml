@@ -2,7 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main, tu8000]
+    branches:
+      - main
+      - tu8000
+      - b1ackha7-integracao
   pull_request:
 
 jobs:

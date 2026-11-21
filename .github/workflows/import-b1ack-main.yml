@@ -1,0 +1,35 @@
+
+name: Importar B1ack main.js completo
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  importar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+        with:
+          ref: b1ackha7-integracao
+
+      - name: Buscar arquivo original completo
+        run: |
+          curl -fL \
+            https://raw.githubusercontent.com/djwalks/B1ackha7TV/main/app/main.js \
+            -o launcher/js/b1ack-main.js
+
+      - name: Verificar JavaScript
+        run: node --check launcher/js/b1ack-main.js
+
+      - name: Salvar no GitHub
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add launcher/js/b1ack-main.js
+          git commit -m "Importa B1ack main.js completo"
+          git push
+          

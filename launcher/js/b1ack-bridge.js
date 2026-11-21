@@ -5,7 +5,9 @@
   var SERVICE_ID = 'DclHome001.Watcher';
   var SERVICE_URL = 'http://127.0.0.1:47790';
 
-  if (!tv || !tv.application) return;
+  if (!tv || !tv.application) {
+    return;
+  }
 
   var app = tv.application;
   var originalLaunch = app.launch;
@@ -61,12 +63,16 @@
         });
         serviceRequest('/apps?ids=' + ids.map(encodeURIComponent).join(','));
       } catch (e) {}
-      if (success) success(list);
+      if (success) {
+        success(list);
+      }
     }, error);
   };
 
   document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) serviceRequest('/home');
+    if (!document.hidden) {
+      serviceRequest('/home');
+    }
   });
 
   serviceRequest('/home');

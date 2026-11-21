@@ -1,3 +1,4 @@
+
 (function () {
   'use strict';
   var $ = function (id) { return document.getElementById(id); };
@@ -53,11 +54,8 @@
     document.title = prefs.name;
   }
   function safeImagePath(path) {
-    function safeImagePath(path) {
-  return /^(?:assets\/)[a-zA-Z0-9_/ .-]+\.(?:png|jpe?g|webp)$/i.test(path) && path.indexOf('..') === -1;
-}
-
-function background(path, persist) {
+    return /^(?:assets\/)[a-zA-Z0-9_/ .-]+\.(?:png|jpe?g|webp)$/i.test(path) && path.indexOf('..') === -1;
+  }
   function background(path, persist) {
     var request = ++imageRequest;
     $('wallpaper').style.backgroundImage = themes[prefs.theme];
@@ -169,6 +167,185 @@ function background(path, persist) {
       tv.application.getAppsInfo(function (list) {
         if (request !== appRequest) { return; }
         apps = list || []; renderApps(); report('App list refreshed.');
+      }, function (e) { if (request === appRequest) { report('The TV could not list apps.', e); renderApps(); } });
+    } catch (e) { report('App discovery is unavailable.', e); renderApps(); }
+  }
+  function iconSummary() {
+    var missing = Object.keys(iconResults).filter(function (id) { return iconResults[id].failed; }).map(function (id) { return iconResults[id].name; });
+    $('icon-status').textContent = missing.length ? 'Pictures unavailable: ' + missing.join(', ') + '. Select Refresh apps to retry.' : 'No missing pictures detected among checked apps.';
+  }
+  function loadAppIcon(app,button,initial) {
+    var image = document.createElement('img'), paths = [], seen = Object.create(null);
+    var timer, attempt = 0, refreshed = false, resolved = false, bundled = false, original = app.iconPath || '';
+    var cacheKey = app.id + '\n' + original;
+    image.alt = ''; image.hidden = true; button.appendChild(image);
+    function add(value) {
+      if (typeof value !== 'string' || !value || seen[value]) { return; }
+      seen[value] = true; paths.push(value);
+      // Native absolute filesystem paths must not be interpreted relative to the widget.
+      if (value.charAt(0) === '/' && value.charAt(1) !== '/') {
+        var uri = 'file://' + value.split('/').map(encodeURIComponent).join('/');
+        if (!seen[uri]) { seen[uri] = true; paths.push(uri); }
+      }
+    }
+    function finish(failed) {
+      clearTimeout(timer); image.onload = image.onerror = null;
+      image.hidden = failed; initial.hidden = !failed;
+      if (!failed) { iconCache[cacheKey] = image.getAttribute('src'); }
+      iconResults[app.id] = {name:app.name || app.id, failed:failed}; iconSummary();
+    }
+    function next() {
+      clearTimeout(timer);
+      if (paths.length) {
+        var token = ++attempt, candidate = paths.shift();
+        image.onload = function () { if (token === attempt) { finish(false); } };
+        image.onerror = function () { if (token === attempt) { next(); } };
+        timer = setTimeout(function () { if (token === attempt) { next(); } },3000);
+        image.src = candidate; return;
+      }
+      if (!refreshed) {
+        refreshed = true;
+        try { if (tv && tv.application && tv.application.getAppInfo) { add(tv.application.getAppInfo(app.id).iconPath); } } catch (ignore) { /* Some system apps hide details. */ }
+        if (paths.length) { next(); return; }
+      }
+      if (!resolved && original && tv && tv.filesystem && tv.filesystem.resolve) {
+        resolved = true;
+        var finishedResolve = false;
+        function resume(value) { if (finishedResolve) { return; } finishedResolve = true; clearTimeout(timer); add(value); next(); }
+        timer = setTimeout(function () { resume(''); },3000);
+        try { tv.filesystem.resolve(original,function (file) {
+          try { resume(file.toURI()); } catch (ignore) { resume(''); }
+        },function () { resume(''); },'r'); } catch (ignore) { resume(''); }
+        return;
+      }
+      if (!bundled && /^(amazon)?primevideo$/.test((app.name || '').toLowerCase().replace(/[^a-z0-9]/g,''))) {
+        bundled = true; add('assets/prime-video.svg'); next(); return;
+      }
+      finish(true);
+    }
+    if (iconCache[cacheKey]) { add(iconCache[cacheKey]); }
+    add(original); next();
+  }
+  function wantedPreview() { return prefs.preview && !document.hidden && !launching && !previewBlocked; }
+  function previewLabel(text) { $('preview-message').textContent = text; }
+  // Serialize show/hide so a late show callback cannot leave video over another app.
+  function syncPreview(done) {
+    if (!tv || !tv.tvwindow) { previewLabel('TV preview is available on the Samsung TV.'); if (done) { done(); } return; }
+    if (windowBusy) { if (done) { window.setTimeout(function () { syncPreview(done); }, 50); } return; }
+    var desired = wantedPreview();
+    if (windowVisible === desired && !(desired && previewNeedsShow)) { if (!desired && !previewBlocked) { previewLabel(prefs.preview ? 'Preview paused.' : 'Preview is off.'); } if (done) { done(); } return; }
+    windowBusy = true;
+    var settled = false;
+    var watchdog = setTimeout(function () { completed({name:'TimeoutError',message:'TV did not respond. Select Retry TV.'}); }, 5000);
+    function completed(error) {
+      if (settled) {
+        // A show may complete after the timeout and after this app was hidden.
+        if (!error && desired && !wantedPreview()) { windowVisible = true; syncPreview(); }
+        return;
+      }
+      settled = true; clearTimeout(watchdog);
+      windowBusy = false;
+      if (error) {
+        previewNeedsShow = true;
+        previewBlocked = true; report('TV preview unavailable. Check input and try again.', error);
+        document.body.classList.remove('preview-active');
+        previewLabel('Preview unavailable — select Retry TV.');
+      } else {
+        windowVisible = desired;
+        previewNeedsShow = !desired;
+        document.body.classList.toggle('preview-active', windowVisible);
+        previewLabel(windowVisible ? '' : 'Preview is off.');
+      }
+      if (!error && wantedPreview() !== windowVisible) { syncPreview(done); }
+      else if (done) { done(); }
+    }
+    try {
+      if (desired) {
+        var r = $('preview-picture').getBoundingClientRect();
+        // Avoid fractional percentage parsing on older TV firmware. Measure after layout
+        // and send explicit, integer pixel coordinates for the actual app viewport.
+        var rect = [r.left,r.top,r.width,r.height].map(function (value) { return Math.round(value) + 'px'; });
+        if (r.width < 100 || r.height < 100) { completed({name:'LayoutError',message:'Preview layout is not ready. Select Retry TV.'}); return; }
+        tv.tvwindow.show(function () {
+          completed();
+          if (typeof tv.tvwindow.getRect === 'function' && wantedPreview()) {
+            try { tv.tvwindow.getRect(function (actual) {
+              report('TV preview bounds: ' + actual.join(', '));
+            }, function (e) { report('Could not check TV preview bounds.',e); }, 'px', 'MAIN'); } catch (ignore) { /* Optional diagnostics. */ }
+          }
+        }, completed, rect, 'MAIN', 'FRONT');
+      } else { tv.tvwindow.hide(function () { completed(); }, completed, 'MAIN'); }
+    } catch (e) { completed(e); }
+  }
+  function updatePreviewToggle() { $('preview-toggle').textContent = prefs.preview ? 'Turn off' : 'Turn on'; }
+  function retryPreview() {
+    prefs.preview = true; previewBlocked = false; previewNeedsShow = true;
+    save(); updatePreviewToggle();
+    if (tv && tv.tvwindow) { readCurrentSource(); }
+    syncPreview();
+  }
+  function launch(id, name, appControl) {
+    if (launching) { return; }
+    if (!tv || !tv.application || typeof tv.application.launch !== 'function') { report('Launching apps is unavailable on this device.'); return; }
+    var generation = ++launchGeneration, attempt = 0, routes = [], index = 0;
+    var canControl = typeof tv.ApplicationControl === 'function' && typeof tv.application.launchAppControl === 'function';
+    function add(target) {
+      if (routes.some(function (route) { return route.id === target; })) { return; }
+      routes.push({id:target,control:appControl || null});
+      if (!appControl && canControl) { routes.push({id:target,control:'default'}); }
+    }
+    add(id);
+    if (!appControl) {
+      var selected = apps.filter(function (app) { return app.id === id; })[0];
+      if (selected && appGroupKey(selected).indexOf('brand:') === 0) {
+        apps.filter(function (app) { return appGroupKey(app) === appGroupKey(selected) && app.id !== id; })
+          .sort(function (a,b) { return (a.show === false ? 1 : 0) - (b.show === false ? 1 : 0); })
+          .slice(0,2).forEach(function (app) { add(app.id); });
+      }
+    }
+    function message(text, error) {
+      $('launch-feedback').hidden = false;
+      $('launch-feedback').textContent = text + (error && error.name ? ' (' + error.name + ')' : '');
+      report(text,error);
+    }
+    function active(token) { return generation === launchGeneration && attempt === token && launching && !document.hidden; }
+    function stop(error) {
+      clearTimeout(launchTimer); ++launchGeneration; launching = false;
+      previewBlocked = false; previewNeedsShow = true; syncPreview();
+      message('Could not open ' + name + '. You can try another app or open it from Samsung Home.',error);
+    }
+    function next(error) {
+      clearTimeout(launchTimer);
+      if (generation !== launchGeneration || document.hidden) { return; }
+      if (index >= routes.length) { stop(error || {name:'LaunchTimeout'}); return; }
+      var route = routes[index++], token = ++attempt, answered = false;
+      message(index === 1 ? 'Opening ' + name + '…' : 'Trying another way to open ' + name + '…');
+      // A success callback acknowledges a request; it does not prove a foreground handoff.
+      launchTimer = setTimeout(function () { if (active(token)) { next({name:'LaunchTimeout'}); } }, 8000);
+      function failed(e) {
+        if (!active(token) || answered) { return; }
+        answered = true;
+        if (e && /^(NotFoundError|UnknownError|NotSupportedError)$/.test(e.name)) { next(e); }
+        else { stop(e); }
+      }
+      function accepted() {
+        if (!active(token) || answered) { return; }
+        answered = true;
+        message('Waiting for ' + name + ' to appear…');
+      }
+      try {
+        var control = route.control === 'default' ? new tv.ApplicationControl('http://tizen.org/appcontrol/operation/default',null,null,null,null,'SINGLE') : route.control;
+        if (control) { tv.application.launchAppControl(control, route.id, accepted, failed); }
+        else { tv.application.launch(route.id, accepted, failed); }
+      } catch (e) { failed(e); }
+    }
+    launching = true;
+    // Preview cleanup must not prevent the launch request when a TV callback stalls.
+    syncPreview();
+    next();
+  }
+  function sourceName(source) { return source.type + (source.type === 'TV' ? '' : ' ' + source.number); }
+  function ps(); report('App list refreshed.');
       }, function (e) { if (request === appRequest) { report('The TV could not list apps.', e); renderApps(); } });
     } catch (e) { report('App discovery is unavailable.', e); renderApps(); }
   }

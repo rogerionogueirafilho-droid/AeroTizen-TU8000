@@ -5,7 +5,7 @@ AeroTizen.config = {
   APP_ID: 'DclHome001.Home',
   SERVICE_ID: 'DclHome001.Watcher',
   SERVICE_URL: 'http://127.0.0.1:47790',
-  WATCHER_ENABLED: false,
+  WATCHER_ENABLED: true,
 
   STORAGE_KEY: 'aerotizen.settings.v1',
   LEGACY_STORAGE_KEYS: ['hearth.home.v1', 'declutter.home.v5'],
@@ -16,9 +16,7 @@ AeroTizen.config = {
   // Apps placed on the home grid the first time, by name prefix, in this order.
   DEFAULT_HOME_APPS: ['netflix', 'disney', 'hbo', 'apple tv', 'prime video', 'youtube', 'nuvio', 'smart iptv'],
 
-  // Real user apps: Samsung-store packages (10-char ids) plus the preinstalled streamers,
-  // which the TV's local API knows by their store ids. getAppsInfo() returns ~470 entries;
-  // everything else is firmware plumbing.
+  // Real user apps: Samsung-store packages plus the preinstalled streamers.
   STORE_PACKAGE: /^[A-Za-z0-9]{10}$/,
   PRELOADED_APPS: { 'org.tizen.netflix-app': '3201907018807', 'org.tizen.primevideo': '3201910019365', 'com.samsung.tv.aria-video': '3201807016597', 'org.tizen.browser': '3201907018784', 'com.samsung.tv.gallery': '3201710015037' },
   HIDDEN_APPS: /(?:\.service$|companion|dummy|widget|DclHome001|webaccount|multiscreen|lowmem)/i,

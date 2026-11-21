@@ -7,9 +7,9 @@
   <feature name="http://tizen.org/feature/web.service"/>
   <tizen:application id="DclHome001.Home" package="DclHome001" required_version="2.3"/>
   <tizen:service id="DclHome001.Watcher" on-boot="true" auto-restart="false">
-    <tizen:content src="service/bootstrap.js"/>
+    <tizen:content src="service/index.js"/>
     <tizen:name>AeroTizen Startup</tizen:name>
-    <tizen:description>Opens the home screen at startup without visibility polling</tizen:description>
+    <tizen:description>Monitors launched TV apps and returns to AeroTizen when Home is pressed</tizen:description>
   </tizen:service>
   <tizen:profile name="tv-samsung"/>
   <tizen:setting screen-orientation="landscape" context-menu="disable" background-support="enable" encryption="disable" install-location="auto" hwkey-event="enable"/>

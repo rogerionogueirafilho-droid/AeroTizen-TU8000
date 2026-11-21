@@ -43,7 +43,6 @@
     } catch (e) { report('Saved settings could not be read; using defaults.', e); }
   }
   function cleanName(value) {
-    // eslint-disable-next-line no-control-regex
     return value.replace(/[\u0000-\u001f\u007f]/g,'').replace(/\s+/g,' ').trim().slice(0,32).trim() || 'My TV';
   }
   function applyName() {
@@ -53,7 +52,7 @@
     document.title = prefs.name;
   }
   function safeImagePath(path) {
-    return /^(?:assets\/)[a-zA-Z0-9_\/ .-]+\.(?:png|jpe?g|webp)$/i.test(path) && path.indexOf('..') === -1;
+    return /^(?:assets\/)[a-zA-Z0-9_\-\/ .]+\.(?:png|jpe?g|webp)$/i.test(path) && path.indexOf('..') === -1;
   }
   function background(path, persist) {
     var request = ++imageRequest;

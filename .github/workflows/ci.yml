@@ -27,6 +27,7 @@ jobs:
 
   launcher:
     runs-on: ubuntu-latest
+    # Disparar testes do projeto
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

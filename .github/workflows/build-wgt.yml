@@ -1,0 +1,83 @@
+
+name: Build AeroTizen Black Edition WGT
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - b1ackha7-integracao
+    paths:
+      - "launcher/**"
+      - ".github/workflows/build-wgt.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Verificar JavaScript
+        run: |
+          node --check launcher/js/b1ack-bridge.js
+          node --check launcher/js/b1ack-main.js
+          node --check launcher/service/index.js
+
+      - name: Validar configuracao Tizen
+        run: |
+          python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          root = ET.parse("launcher/config.xml").getroot()
+          ns = {"t": "http://tizen.org/ns/widgets"}
+
+          app = root.find("t:application", ns)
+          service = root.find("t:service", ns)
+
+          assert app is not None
+          assert app.get("id") == "DclHome001.Home"
+          assert service is not None
+          assert service.get("id") == "DclHome001.Watcher"
+          assert service.get("on-boot") == "true"
+
+          assert service.find("t:content", ns).get("src") == "service/index.js"
+
+          for file in [
+              "launcher/config.xml",
+              "launcher/index.html",
+              "launcher/js/b1ack-bridge.js",
+              "launcher/js/b1ack-main.js",
+              "launcher/service/index.js"
+          ]:
+              assert Path(file).is_file(), f"Arquivo ausente: {file}"
+
+          print("Configuracao e arquivos principais validados.")
+          PY
+
+      - name: Gerar pacote WGT
+        run: |
+          mkdir -p dist
+          cd launcher
+          zip -X -q -r ../dist/AeroTizen-Black-Edition-unsigned.wgt .
+          cd ..
+
+      - name: Verificar pacote
+        run: |
+          unzip -t dist/AeroTizen-Black-Edition-unsigned.wgt
+          unzip -Z1 dist/AeroTizen-Black-Edition-unsigned.wgt | grep -qx "config.xml"
+          unzip -Z1 dist/AeroTizen-Black-Edition-unsigned.wgt | grep -qx "index.html"
+          unzip -Z1 dist/AeroTizen-Black-Edition-unsigned.wgt | grep -qx "service/index.js"
+
+      - name: Disponibilizar WGT
+        uses: actions/upload-artifact@v4
+        with:
+          name: AeroTizen-Black-Edition-WGT
+          path: dist/AeroTizen-Black-Edition-unsigned.wgt
+          if-no-files-found: error
+          retention-days: 30
+          

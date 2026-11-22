@@ -344,10 +344,17 @@
     next();
   }
   function sourceName(source) { return source.type + (source.type === 'TV' ? '' : ' ' + source.number); }
+  
   function readCurrentSource() {
-    try { $('source-label').textContent = sourceName(tv.tvwindow.getSource('MAIN')); }
-    catch (e) { report('Current input could not be read.', e); }
+    try {
+      var currentSource = tv.tvwindow.getSource('MAIN');
+      var currentLabel = $('source-label');
+      currentLabel.textContent = sourceName(currentSource);
+    } catch (e) {
+      report('Current input could not be read.', e);
+    }
   }
+
   function refreshSources() {
     $('sources').textContent = '';
     if (!tv || !tv.systeminfo || !tv.tvwindow) { $('sources').textContent = 'Input selection requires the TV.'; return; }

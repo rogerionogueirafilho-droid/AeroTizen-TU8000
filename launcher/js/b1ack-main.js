@@ -52,14 +52,14 @@
     $('launcher-name').value = prefs.name;
     document.title = prefs.name;
   }
-  function safeImagePath(path) {
     function safeImagePath(path) {
-  return /^(?:assets\/)[a-zA-Z0-9_/ .-]+\.(?:png|jpe?g|webp)$/i.test(path) && path.indexOf('..') === -1;
-}
     var request = ++imageRequest;
     $('wallpaper').style.backgroundImage = themes[prefs.theme];
     if (!path) { return; }
-    if (!safeImagePath(path)) { report('Use a packaged image path such as assets/background.jpg.'); return; }
+    if (!/^(?:assets\/)[a-zA-Z0-9_/ .-]+\.(?:png|jpe?g|webp)$/i.test(path) || path.indexOf('..') !== -1) {
+      report('Use a packaged image path such as assets/background.jpg.');
+      return;
+    }
     var img = new Image();
     img.onload = function () {
       if (request !== imageRequest) { return; }
@@ -68,7 +68,7 @@
     };
     img.onerror = function () { if (request === imageRequest) { report('Image was not found in the app package.'); } };
     img.src = path;
-  }
+    }
   function appGroupKey(app) {
     var name = (app.name || '').toLowerCase().replace(/[®™]/g,'').replace(/\+/g,'plus').replace(/[^a-z0-9]/g,'');
     if (/^(amazonprimevideo|primevideo|amazonvideo)$/.test(name)) { return 'brand:prime-video'; }

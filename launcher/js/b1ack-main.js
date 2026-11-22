@@ -52,7 +52,7 @@
     $('launcher-name').value = prefs.name;
     document.title = prefs.name;
   }
-    function safeImagePath(path) {
+    function background(path, persist) {
     var request = ++imageRequest;
     $('wallpaper').style.backgroundImage = themes[prefs.theme];
     if (!path) { return; }
